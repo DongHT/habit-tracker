@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Habit Tracker</title>
+<style>
+:root {
+  --bg: #0f0f14;
+  --card: #1a1a24;
+  --card-hover: #222230;
+  --text: #e0e0e0;
+  --text-dim: #8888a0;
+  --accent: #6c5ce7;
+  --accent-glow: #a29bfe;
+  --success: #00cec9;
+  --warning: #fdcb6e;
+  --danger: #ff7675;
+  --border: #2a2a3a;
+  --radius: 14px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.3);
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+:root.light {
+  --bg: #f5f5f8;
+  --card: #ffffff;
+  --card-hover: #f8f8fc;
+  --text: #1a1a2e;
+  --text-dim: #888;
+  --border: #e0e0e8;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 16px;
+  transition: background 0.3s, color 0.3s;
+}
+.container { max-width: 720px; margin: 0 auto; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+}
+.header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+.date-nav {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border-radius: 28px; padding: 6px 14px;
+  box-shadow: var(--shadow);
+}
+.date-nav button {
+  background: none; border: none; color: var(--text); cursor: pointer;
+  font-size: 1.1rem; padding: 4px 8px; border-radius: 50%;
+  transition: background 0.2s;
+}
+.date-nav button:hover { background: var(--border); }
+.date-nav .date-text { font-weight: 600; font-size: 0.9rem; min-width: 100px; text-align: center; }
+.date-nav .today-btn {
+  font-size: 0.72rem; color: var(--accent); padding: 4px 10px;
+  border: 1px solid var(--accent); border-radius: 14px;
+}
+
+/* Progress */
+.progress-section { margin-bottom: 18px; }
+.progress-bar-wrap {
+  background: var(--card); border-radius: var(--radius);
+  padding: 14px 20px; box-shadow: var(--shadow);
+}
+.progress-label {
+  display: flex; justify-content: space-between; margin-bottom: 6px;
+  font-size: 0.85rem; color: var(--text-dim);
+}
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.progress-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-glow));
+  transition: width 0.4s ease;
+}
+
+/* Category Cards */
+.category-card {
+  background: var(--card); border-radius: var(--radius);
+  margin-bottom: 14px; box-shadow: var(--shadow); overflow: hidden;
+}
+.category-header {
+  padding: 14px 18px; font-weight: 700; font-size: 1.05rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; user-select: none;
+  transition: background 0.2s;
+}
+.category-header:hover { background: var(--card-hover); }
+.category-header .arrow { font-size: 0.7rem; transition: transform 0.25s; color: var(--text-dim); }
+.category-header .arrow.open { transform: rotate(90deg); }
+.category-body { padding: 10px 16px 16px; }
+.category-body.collapsed { display: none; }
+
+/* Sub-items */
+.sub-item {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; margin-top: 10px;
+}
+.sub-item-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; gap: 8px;
+}
+.sub-item-label { font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+.sub-item-summary { font-size: 0.78rem; color: var(--text-dim); }
+.sub-item-summary.done { color: var(--success); }
+
+/* Segments */
+.segment-list { margin-bottom: 6px; }
+.segment-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 0; font-size: 0.85rem;
+}
+.segment-row input {
+  padding: 5px 8px; border-radius: 6px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  color: var(--text); font-size: 0.82rem; font-family: var(--font);
+  text-align: center;
+}
+.segment-row input:focus { outline: none; border-color: var(--accent); }
+.segment-row input.wide { width: 60px; }
+.segment-row input.narrow { width: 48px; }
+.segment-row .seg-unit { font-size: 0.72rem; color: var(--text-dim); min-width: 20px; }
+.segment-row .seg-idx { color: var(--text-dim); font-size: 0.72rem; min-width: 22px; }
+
+/* LeetCode problem row */
+.lc-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; font-size: 0.85rem;
+}
+.lc-row input[type="checkbox"] {
+  width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+}
+.lc-row .lc-name { flex: 1; }
+.lc-row .lc-name.done { text-decoration: line-through; color: var(--text-dim); }
+
+/* Buttons */
+.add-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 12px; border-radius: 16px; border: 1px dashed var(--border);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+  font-size: 0.78rem; font-family: var(--font);
+  transition: all 0.2s; margin-top: 4px;
+}
+.add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.del-btn {
+  background: none; border: none; color: var(--text-dim); cursor: pointer;
+  font-size: 0.9rem; padding: 2px 6px; border-radius: 4px;
+  transition: all 0.15s; line-height: 1;
+}
+.del-btn:hover { color: var(--danger); background: rgba(255,118,117,0.1); }
+
+/* Toggle */
+.habit-toggle {
+  width: 44px; height: 26px; border-radius: 13px;
+  border: 2px solid var(--border); background: var(--bg);
+  cursor: pointer; position: relative; transition: all 0.25s; flex-shrink: 0;
+}
+.habit-toggle.on { background: var(--success); border-color: var(--success); }
+.habit-toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--text); transition: transform 0.25s;
+}
+.habit-toggle.on::after { transform: translateX(18px); background: #fff; }
+
+/* LeetCode add input */
+.lc-add-wrap { display: flex; gap: 6px; margin-top: 6px; }
+.lc-add-wrap input {
+  flex: 1; padding: 6px 10px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  color: var(--text); font-size: 0.82rem; font-family: var(--font);
+}
+.lc-add-wrap input:focus { outline: none; border-color: var(--accent); }
+.lc-add-wrap button {
+  padding: 6px 14px; border-radius: 8px; border: none;
+  background: var(--accent); color: #fff; font-weight: 600;
+  cursor: pointer; font-size: 0.8rem; font-family: var(--font);
+  white-space: nowrap;
+}
+.lc-add-wrap button:hover { opacity: 0.85; }
+
+/* Toggle row */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+
+/* Heatmap */
+.heatmap-section { margin-bottom: 18px; }
+.heatmap-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+}
+.heatmap-header h2 { font-size: 0.95rem; color: var(--text-dim); }
+.heatmap-tabs { display: flex; gap: 4px; }
+.heatmap-tabs button {
+  padding: 4px 12px; border-radius: 12px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+  font-size: 0.75rem; font-family: var(--font); transition: all 0.2s;
+}
+.heatmap-tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.heatmap-tabs button:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+.heatmap-wrap {
+  background: var(--card); border-radius: var(--radius);
+  padding: 12px 14px; box-shadow: var(--shadow); overflow-x: auto;
+}
+.heatmap-weekdays {
+  display: grid; grid-template-columns: 28px repeat(7, 34px);
+  gap: 3px; margin-bottom: 4px; padding: 0 2px;
+}
+.heatmap-weekdays span {
+  font-size: 0.62rem; color: var(--text-dim); text-align: center; font-weight: 600;
+}
+.heatmap-rows {
+  display: flex; flex-direction: column; gap: 3px;
+}
+.heatmap-rows.year-scroll { max-height: 400px; overflow-y: auto; }
+.heatmap-week {
+  display: grid; grid-template-columns: 28px repeat(7, 34px);
+  gap: 3px; align-items: center;
+}
+.heatmap-week-label {
+  font-size: 0.55rem; color: var(--text-dim); text-align: center; opacity: 0.7;
+}
+.heatmap-month-label {
+  font-size: 0.7rem; color: var(--text-dim); text-align: center;
+  padding: 2px 0; opacity: 0.5; letter-spacing: 2px;
+}
+.heatmap-day {
+  aspect-ratio: 1; width: 100%; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; cursor: pointer; position: relative;
+  transition: transform 0.15s; flex-shrink: 0; font-weight: 500;
+}
+.heatmap-day:hover { transform: scale(1.3); z-index: 1; }
+.heatmap-day.l0 { background: var(--border); color: var(--text-dim); }
+.heatmap-day.l1 { background: #2d1f4e; color: #a78bfa; }
+.heatmap-day.l2 { background: #4a2d7a; color: #c4b5fd; }
+.heatmap-day.l3 { background: #6c3cb0; color: #e0d5ff; }
+.heatmap-day.l4 { background: #8b5cf6; color: #fff; }
+.heatmap-day.l5 { background: #a78bfa; color: #1a1a2e; }
+.heatmap-day.l6 { background: #c4b5fd; color: #1a1a2e; }
+.heatmap-day.l7 { background: var(--accent-glow); color: #1a1a2e; }
+.heatmap-day.future { opacity: 0.25; pointer-events: none; }
+.heatmap-day.empty { visibility: hidden; pointer-events: none; }
+
+/* Year grid */
+.heatmap-year-grid {
+  display: flex; flex-wrap: wrap; gap: 12px;
+}
+.heatmap-month-block {
+  background: var(--bg); border-radius: var(--radius);
+  padding: 8px; min-width: 160px; flex: 1 1 auto;
+}
+.heatmap-month-name {
+  font-size: 0.7rem; color: var(--text-dim); text-align: center;
+  margin-bottom: 4px; font-weight: 600;
+}
+.heatmap-month-block .heatmap-weekdays {
+  grid-template-columns: 20px repeat(7, 20px); gap: 2px;
+}
+.heatmap-month-block .heatmap-week {
+  grid-template-columns: 20px repeat(7, 20px); gap: 2px;
+}
+.heatmap-month-block .heatmap-day { font-size: 0.5rem; border-radius: 3px; }
+.heatmap-month-block .heatmap-week-label { font-size: 0.45rem; }
+
+.heatmap-day .tooltip {
+  display: none; position: absolute; bottom: 34px; left: 50%;
+  transform: translateX(-50%); background: #1a1a2e; color: #fff;
+  padding: 4px 10px; border-radius: 6px; font-size: 0.68rem;
+  white-space: nowrap; z-index: 10; pointer-events: none;
+}
+.heatmap-day:hover .tooltip { display: block; }
+
+/* Todo */
+.todo-section { margin-bottom: 18px; }
+.todo-section h2 { font-size: 0.95rem; margin-bottom: 10px; color: var(--text-dim); }
+.todo-card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+.todo-input-wrap { display: flex; gap: 8px; margin-bottom: 12px; }
+.todo-input-wrap input {
+  flex: 1; padding: 10px 14px; border-radius: 10px;
+  border: 2px solid var(--border); background: var(--bg);
+  color: var(--text); font-size: 0.9rem; font-family: var(--font);
+}
+.todo-input-wrap input:focus { outline: none; border-color: var(--accent); }
+.todo-input-wrap button {
+  padding: 10px 18px; border-radius: 10px; border: none;
+  background: var(--accent); color: #fff; font-weight: 600;
+  cursor: pointer; font-size: 0.9rem; transition: opacity 0.2s; font-family: var(--font);
+}
+.todo-input-wrap button:hover { opacity: 0.85; }
+.todo-list { list-style: none; }
+.todo-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.todo-item:last-child { border-bottom: none; }
+.todo-item input[type="checkbox"] {
+  width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
+}
+.todo-item .todo-text { flex: 1; font-size: 0.9rem; }
+.todo-item .todo-text.done { text-decoration: line-through; color: var(--text-dim); }
+.todo-item .todo-del {
+  background: none; border: none; color: var(--text-dim); cursor: pointer;
+  font-size: 1rem; padding: 4px 8px; border-radius: 6px; transition: all 0.2s;
+}
+.todo-item .todo-del:hover { color: var(--danger); background: rgba(255,118,117,0.1); }
+
+/* Bottom bar */
+.bottom-bar {
+  display: flex; gap: 10px; justify-content: center; margin-top: 8px; padding-bottom: 24px; flex-wrap: wrap;
+}
+.bottom-bar button {
+  padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text-dim); cursor: pointer;
+  font-size: 0.8rem; transition: all 0.2s; font-family: var(--font);
+}
+.bottom-bar button:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 480px) {
+  body { padding: 10px; }
+  .header h1 { font-size: 1.15rem; }
+  .date-nav { padding: 4px 10px; gap: 4px; }
+  .date-nav .date-text { font-size: 0.8rem; min-width: 80px; }
+  .segment-row { flex-wrap: wrap; }
+  .heatmap-weekdays { grid-template-columns: 20px repeat(7, 22px); gap: 2px; }
+  .heatmap-week { grid-template-columns: 20px repeat(7, 22px); gap: 2px; }
+  .heatmap-day { font-size: 0.5rem; border-radius: 3px; }
+  .heatmap-week-label { font-size: 0.45rem; }
+  .heatmap-weekdays span { font-size: 0.48rem; }
+  .heatmap-month-block { min-width: 130px; padding: 4px; }
+  .heatmap-month-block .heatmap-weekdays { grid-template-columns: 16px repeat(7, 16px); gap: 1px; }
+  .heatmap-month-block .heatmap-week { grid-template-columns: 16px repeat(7, 16px); gap: 1px; }
+  .heatmap-year-grid { gap: 6px; }
+  .sync-panel { padding: 8px 10px; }
+  .sync-panel input { font-size: 0.75rem; padding: 6px 10px; }
+}
+
+/* Sync Panel */
+.sync-section { margin-bottom: 18px; }
+.sync-section summary {
+  font-size: 0.9rem; color: var(--text-dim); cursor: pointer;
+  padding: 6px 0; user-select: none;
+}
+.sync-section summary:hover { color: var(--text); }
+.sync-panel {
+  background: var(--card); border-radius: var(--radius);
+  padding: 14px; margin-top: 8px; box-shadow: var(--shadow);
+}
+.sync-panel label {
+  display: block; font-size: 0.78rem; color: var(--text-dim);
+  margin-bottom: 3px; margin-top: 8px;
+}
+.sync-panel label:first-child { margin-top: 0; }
+.sync-panel input {
+  width: 100%; padding: 8px 12px; border-radius: 8px;
+  border: 2px solid var(--border); background: var(--bg);
+  color: var(--text); font-size: 0.82rem; font-family: var(--font);
+  box-sizing: border-box;
+}
+.sync-panel input:focus { outline: none; border-color: var(--accent); }
+.sync-panel .sync-hint {
+  font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; line-height: 1.5;
+}
+.sync-panel .sync-hint code {
+  background: var(--bg); padding: 1px 5px; border-radius: 4px;
+  font-size: 0.68rem;
+}
+.sync-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.sync-actions button {
+  padding: 8px 14px; border-radius: 8px; border: none;
+  font-weight: 600; cursor: pointer; font-size: 0.8rem;
+  font-family: var(--font); transition: opacity 0.2s;
+}
+.btn-sync-enable { background: var(--accent); color: #fff; }
+.btn-sync-pull { background: #2ed573; color: #000; }
+.btn-sync-push { background: #ffa502; color: #000; }
+.btn-sync-disable { background: var(--danger); color: #fff; }
+.sync-actions button:hover { opacity: 0.8; }
+.sync-status {
+  font-size: 0.75rem; padding: 4px 10px; border-radius: 12px;
+  display: inline-block; font-weight: 500;
+}
+.sync-status.ok { background: rgba(46,213,115,0.15); color: #2ed573; }
+.sync-status.syncing { background: rgba(255,165,2,0.15); color: #ffa502; }
+.sync-status.error { background: rgba(255,118,117,0.15); color: var(--danger); }
+.sync-status.off { background: rgba(150,150,150,0.1); color: #888; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>🏃 每日习惯追踪</h1>
+    <div class="date-nav">
+      <button onclick="changeDate(-1)" title="前一天">◀</button>
+      <span class="date-text" id="dateText"></span>
+      <button onclick="changeDate(1)" title="后一天">▶</button>
+      <button class="today-btn" onclick="goToday()">今天</button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section">
+    <div class="progress-bar-wrap">
+      <div class="progress-label">
+        <span>今日完成度</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Cards -->
+  <div id="categoriesContainer"></div>
+
+  <!-- Heatmap -->
+  <div class="heatmap-section">
+    <div class="heatmap-header">
+      <h2>📅 热力图</h2>
+      <div class="heatmap-tabs">
+        <button data-view="week" class="active" onclick="setHeatmapView('week')">周</button>
+        <button data-view="month" onclick="setHeatmapView('month')">月</button>
+        <button data-view="year" onclick="setHeatmapView('year')">年</button>
+      </div>
+    </div>
+    <div class="heatmap-wrap">
+        <div class="heatmap-weekdays">
+          <span></span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+        </div>
+        <div class="heatmap-rows" id="heatmap"></div>
+      </div>
+  </div>
+
+  <!-- Todo -->
+  <div class="todo-section">
+    <h2>📝 今日待办</h2>
+    <div class="todo-card">
+      <div class="todo-input-wrap">
+        <input type="text" id="todoInput" placeholder="添加待办事项..." onkeydown="if(event.key==='Enter')addTodo()">
+        <button onclick="addTodo()">添加</button>
+      </div>
+      <ul class="todo-list" id="todoList"></ul>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="bottom-bar">
+    <button onclick="toggleTheme()">🌓 切换主题</button>
+    <button onclick="exportData()">📥 导出数据</button>
+    <button onclick="importDataPrompt()">📤 导入数据</button>
+  </div>
+
+  <!-- Cloud Sync -->
+  <details class="sync-section" id="syncSection">
+    <summary>☁️ 云端同步 <span class="sync-status off" id="syncStatus">未配置</span></summary>
+    <div class="sync-panel">
+      <label>Supabase 项目 URL</label>
+      <input type="text" id="syncUrl" placeholder="https://xxxxxxxxxxxx.supabase.co" onchange="saveSyncConfig()">
+      <label>Supabase Anon Key（公开密钥）</label>
+      <input type="text" id="syncKey" placeholder="eyJhbGciOiJIUzI1NiIs..." onchange="saveSyncConfig()">
+      <label>同步标识（自定义，所有设备填相同值）</label>
+      <input type="text" id="syncTag" placeholder="例如：my-habit-2024" onchange="saveSyncConfig()">
+      <div class="sync-hint">
+        需要先在 Supabase 创建 <code>habit_days</code> 表：<br>
+        SQL → <code>CREATE TABLE habit_days (sync_key text NOT NULL, date text NOT NULL, data jsonb NOT NULL, updated_at timestamptz DEFAULT now(), PRIMARY KEY (sync_key, date));</code><br>
+        然后开启 <b>Table → API → Row Level Security → 允许公开访问</b>（个人使用）。
+      </div>
+      <div class="sync-actions">
+        <button class="btn-sync-enable" onclick="enableSync()">🔗 启用同步</button>
+        <button class="btn-sync-pull" onclick="syncPull()">📥 拉取云端</button>
+        <button class="btn-sync-push" onclick="syncPushAll()">📤 全部上传</button>
+        <button class="btn-sync-disable" onclick="disableSync()">⛔ 断开同步</button>
+      </div>
+    </div>
+  </details>
+</div>
+
+<script>
+// ── Helpers ──
+function toDateStr(d) {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+function parseDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// ── Data Definitions ──
+const STORAGE_KEY = 'habit_tracker_data_v2';
+const TODAY = toDateStr(new Date());
+let currentDate = TODAY;
+let heatmapView = 'week';
+
+const categories = [
+  {
+    key: 'learning',
+    name: '📚 学习',
+    items: [
+      { key: 'leetcode', name: 'LeetCode 刷题', icon: '💻', type: 'leetcode', target: 2, unit: '题' },
+      { key: 'cpp', name: 'C++ 学习', icon: '🔧', type: 'log' },
+      { key: 'english', name: '英语学习', icon: '🇬🇧', type: 'log' }
+    ]
+  },
+  {
+    key: 'exercise',
+    name: '💪 体育锻炼',
+    items: [
+      { key: 'pushups', name: '俯卧撑', icon: '🤲', type: 'strength', unit: '次' },
+      { key: 'squats', name: '深蹲', icon: '🦵', type: 'strength', unit: '次' },
+      { key: 'crunches', name: '卷腹', icon: '🔄', type: 'strength', unit: '次' },
+      { key: 'cycling', name: '骑车', icon: '🚴', type: 'cardio', durUnit: '分钟', distUnit: 'km' },
+      { key: 'running', name: '长跑', icon: '🏃', type: 'cardio', durUnit: '分钟', distUnit: 'km' }
+    ]
+  }
+];
+
+// Flatten all items for progress/heatmap
+function allItems() {
+  const result = [];
+  categories.forEach(cat => {
+    cat.items.forEach(item => {
+      result.push({ catKey: cat.key, ...item });
+    });
+  });
+  return result;
+}
+
+// ── Data Layer ──
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function getDayData(date) {
+  const data = loadData();
+  if (!data[date]) {
+    return createEmptyDay();
+  }
+  const d = data[date];
+  // Ensure structure
+  return ensureDayStructure(d);
+}
+
+function createEmptyDay() {
+  return {
+    learning: { leetcode: [], cpp: [], english: [] },
+    exercise: { pushups: [], squats: [], crunches: [], cycling: [], running: [] },
+    todos: []
+  };
+}
+
+function ensureDayStructure(d) {
+  if (!d.learning) d.learning = { leetcode: [], cpp: [], english: [] };
+  if (!Array.isArray(d.learning.leetcode)) d.learning.leetcode = [];
+  if (!Array.isArray(d.learning.cpp)) d.learning.cpp = [];
+  if (!Array.isArray(d.learning.english)) d.learning.english = [];
+  if (!d.exercise) d.exercise = { pushups: [], squats: [], crunches: [], cycling: [], running: [] };
+  ['pushups','squats','crunches','cycling','running'].forEach(k => {
+    if (!Array.isArray(d.exercise[k])) d.exercise[k] = [];
+  });
+  if (!Array.isArray(d.todos)) d.todos = [];
+  return d;
+}
+
+function setDayData(date, dayData) {
+  const data = loadData();
+  data[date] = dayData;
+  saveData(data);
+}
+
+function getSegments(date, catKey, itemKey) {
+  const day = getDayData(date);
+  return day[catKey][itemKey] || [];
+}
+
+function setSegments(date, catKey, itemKey, segments) {
+  const day = getDayData(date);
+  day[catKey][itemKey] = segments;
+  setDayData(date, day);
+}
+
+// ── Cloud Sync (Supabase) ──
+const SYNC_CFG_KEY = 'habit_tracker_sync_cfg';
+
+function getSyncConfig() {
+  try { return JSON.parse(localStorage.getItem(SYNC_CFG_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function saveSyncConfig() {
+  const cfg = getSyncConfig();
+  cfg.url = document.getElementById('syncUrl').value.trim();
+  cfg.key = document.getElementById('syncKey').value.trim();
+  cfg.tag = document.getElementById('syncTag').value.trim();
+  localStorage.setItem(SYNC_CFG_KEY, JSON.stringify(cfg));
+}
+
+function loadSyncConfigToUI() {
+  const cfg = getSyncConfig();
+  document.getElementById('syncUrl').value = cfg.url || '';
+  document.getElementById('syncKey').value = cfg.key || '';
+  document.getElementById('syncTag').value = cfg.tag || '';
+  updateSyncStatusUI(cfg);
+}
+
+function updateSyncStatusUI(cfg) {
+  const el = document.getElementById('syncStatus');
+  cfg = cfg || getSyncConfig();
+  if (cfg.enabled && cfg.url && cfg.key && cfg.tag) {
+    el.className = 'sync-status ok'; el.textContent = '已连接';
+  } else if (cfg.url || cfg.key || cfg.tag) {
+    el.className = 'sync-status off'; el.textContent = '待启用';
+  } else {
+    el.className = 'sync-status off'; el.textContent = '未配置';
+  }
+}
+
+function setSyncStatus(cls, text) {
+  const el = document.getElementById('syncStatus');
+  el.className = 'sync-status ' + cls;
+  el.textContent = text;
+  setTimeout(() => updateSyncStatusUI(), 3000);
+}
+
+async function enableSync() {
+  saveSyncConfig();
+  const cfg = getSyncConfig();
+  if (!cfg.url || !cfg.key || !cfg.tag) {
+    alert('请填写 Supabase URL、Anon Key 和同步标识');
+    return;
+  }
+  cfg.enabled = true;
+  localStorage.setItem(SYNC_CFG_KEY, JSON.stringify(cfg));
+  setSyncStatus('syncing', '测试连接...');
+  try {
+    const resp = await fetch(`${cfg.url}/rest/v1/habit_days?sync_key=eq.${encodeURIComponent(cfg.tag)}&limit=1`, {
+      headers: { 'apikey': cfg.key, 'Authorization': `Bearer ${cfg.key}` }
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    setSyncStatus('ok', '✅ 连接成功');
+    updateSyncStatusUI(cfg);
+    // Pull data after enabling
+    await syncPullAndMerge();
+  } catch (e) {
+    setSyncStatus('error', '❌ 连接失败');
+    console.error('Sync enable error:', e);
+  }
+}
+
+function disableSync() {
+  const cfg = getSyncConfig();
+  cfg.enabled = false;
+  localStorage.setItem(SYNC_CFG_KEY, JSON.stringify(cfg));
+  updateSyncStatusUI(cfg);
+  setSyncStatus('off', '已断开');
+}
+
+async function syncPushDay(date) {
+  const cfg = getSyncConfig();
+  if (!cfg.enabled || !cfg.url || !cfg.key || !cfg.tag) return;
+  try {
+    const data = loadData();
+    const dayData = data[date];
+    if (!dayData) return;
+    const resp = await fetch(`${cfg.url}/rest/v1/habit_days`, {
+      method: 'POST',
+      headers: {
+        'apikey': cfg.key,
+        'Authorization': `Bearer ${cfg.key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ sync_key: cfg.tag, date: date, data: dayData })
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    setSyncStatus('ok', '已同步');
+  } catch (e) {
+    setSyncStatus('error', '同步失败');
+    console.error('Sync push error:', e);
+  }
+}
+
+async function syncPushAll() {
+  const cfg = getSyncConfig();
+  if (!cfg.enabled || !cfg.url || !cfg.key || !cfg.tag) {
+    alert('请先启用云端同步');
+    return;
+  }
+  setSyncStatus('syncing', '上传中...');
+  const data = loadData();
+  const dates = Object.keys(data);
+  let ok = 0, fail = 0;
+  for (const date of dates) {
+    try {
+      const resp = await fetch(`${cfg.url}/rest/v1/habit_days`, {
+        method: 'POST',
+        headers: {
+          'apikey': cfg.key,
+          'Authorization': `Bearer ${cfg.key}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({ sync_key: cfg.tag, date: date, data: data[date] })
+      });
+      if (resp.ok) ok++; else fail++;
+    } catch { fail++; }
+  }
+  setSyncStatus('ok', `上传 ${ok} 成功${fail ? ', ' + fail + ' 失败' : ''}`);
+}
+
+async function syncPull() {
+  const cfg = getSyncConfig();
+  if (!cfg.enabled || !cfg.url || !cfg.key || !cfg.tag) {
+    alert('请先启用云端同步');
+    return;
+  }
+  setSyncStatus('syncing', '拉取中...');
+  await syncPullAndMerge();
+}
+
+async function syncPullAndMerge() {
+  const cfg = getSyncConfig();
+  if (!cfg.enabled || !cfg.url || !cfg.key || !cfg.tag) return;
+  try {
+    const resp = await fetch(`${cfg.url}/rest/v1/habit_days?sync_key=eq.${encodeURIComponent(cfg.tag)}&select=*`, {
+      headers: { 'apikey': cfg.key, 'Authorization': `Bearer ${cfg.key}` }
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const rows = await resp.json();
+    if (!rows.length) { setSyncStatus('ok', '云端无数据'); return; }
+    const localData = loadData();
+    let merged = 0;
+    for (const row of rows) {
+      const remoteDay = row.data;
+      const date = row.date;
+      const localDay = localData[date];
+      if (!localDay) {
+        localData[date] = remoteDay;
+        merged++;
+      } else {
+        // Merge: keep local if it has more completed items
+        const remoteScore = dayScoreFromData(remoteDay);
+        const localScore = dayScoreFromData(localDay);
+        if (remoteScore > localScore) {
+          localData[date] = remoteDay;
+          merged++;
+        } else if (remoteScore === localScore) {
+          // Same score: merge arrays (longer wins for each item)
+          const mergedDay = mergeDayData(localDay, remoteDay);
+          if (JSON.stringify(mergedDay) !== JSON.stringify(localDay)) {
+            localData[date] = mergedDay;
+            merged++;
+          }
+        }
+      }
+    }
+    saveData(localData);
+    renderAll();
+    setSyncStatus('ok', `拉取完成，合并 ${merged} 天`);
+  } catch (e) {
+    setSyncStatus('error', '拉取失败');
+    console.error('Sync pull error:', e);
+  }
+}
+
+function mergeDayData(local, remote) {
+  const result = JSON.parse(JSON.stringify(local));
+  ['learning','exercise'].forEach(cat => {
+    if (!result[cat]) result[cat] = {};
+    if (!remote[cat]) return;
+    Object.keys(remote[cat]).forEach(itemKey => {
+      const localArr = result[cat][itemKey] || [];
+      const remoteArr = remote[cat][itemKey] || [];
+      if (remoteArr.length > localArr.length) {
+        result[cat][itemKey] = JSON.parse(JSON.stringify(remoteArr));
+      }
+    });
+  });
+  // Merge todos: keep unique items
+  if (remote.todos && Array.isArray(remote.todos)) {
+    const localTodos = result.todos || [];
+    const localTexts = new Set(localTodos.map(t => t.text));
+    remote.todos.forEach(t => {
+      if (!localTexts.has(t.text)) localTodos.push(t);
+    });
+    result.todos = localTodos;
+  }
+  return result;
+}
+
+function dayScoreFromData(dayData) {
+  if (!dayData) return 0;
+  let score = 0;
+  try {
+    const d = ensureDayStructure(JSON.parse(JSON.stringify(dayData)));
+    const items = allItems();
+    items.forEach(item => {
+      const segs = d[item.catKey] && d[item.catKey][item.key] ? d[item.catKey][item.key] : [];
+      if (item.type === 'toggle') {
+        if (segs === true) score++;
+      } else if (item.type === 'leetcode') {
+        const done = segs.filter(s => s && s.done).length;
+        if (done >= (item.target || 2)) score++;
+      } else if (item.type === 'log') {
+        const done = segs.filter(s => s && s.done).length;
+        if (done > 0) score++;
+      } else if (item.type === 'strength') {
+        const total = segs.reduce((sum, s) => sum + (s.count || 0), 0);
+        if (total > 0) score++;
+      } else if (item.type === 'cardio') {
+        const totalDist = segs.reduce((sum, s) => sum + (s.distance || 0), 0);
+        if (totalDist > 0) score++;
+      }
+    });
+  } catch { return 0; }
+  return score;
+}
+
+// Override setDayData to auto-sync
+const _origSetDayData = setDayData;
+setDayData = function(date, dayData) {
+  _origSetDayData(date, dayData);
+  syncPushDay(date);
+};
+
+// Init sync on load
+function initSync() {
+  loadSyncConfigToUI();
+  const cfg = getSyncConfig();
+  if (cfg.enabled && cfg.url && cfg.key && cfg.tag) {
+    syncPullAndMerge();
+  }
+}
+
+function getToggle(date, catKey, itemKey) {
+  const day = getDayData(date);
+  return !!day[catKey][itemKey];
+}
+
+function setToggle(date, catKey, itemKey, val) {
+  const day = getDayData(date);
+  day[catKey][itemKey] = val;
+  setDayData(date, day);
+}
+
+// ── Item completion check ──
+function isItemDone(date, catKey, item) {
+  if (item.type === 'toggle') {
+    return getToggle(date, catKey, item.key);
+  }
+  if (item.type === 'log') {
+    const segs = getSegments(date, catKey, item.key);
+    return segs.filter(s => s.done).length > 0;
+  }
+  if (item.type === 'leetcode') {
+    const segs = getSegments(date, catKey, item.key);
+    const doneCount = segs.filter(s => s.done).length;
+    return doneCount >= item.target;
+  }
+  if (item.type === 'strength') {
+    const segs = getSegments(date, catKey, item.key);
+    const total = segs.reduce((sum, s) => sum + (s.reps || 0), 0);
+    return total > 0;
+  }
+  if (item.type === 'cardio') {
+    const segs = getSegments(date, catKey, item.key);
+    const total = segs.reduce((sum, s) => sum + (s.distance || 0), 0);
+    return total > 0;
+  }
+  return false;
+}
+
+// ── Streak ──
+function computeStreak(catKey, item, dateStr) {
+  const data = loadData();
+  let streak = 0;
+  const d = parseDate(dateStr);
+  while (true) {
+    const ds = toDateStr(d);
+    const day = data[ds];
+    if (!day) break;
+    const ensured = ensureDayStructure(day);
+    // Temporarily set as current day for isItemDone to work
+    // We need to check directly
+    let done = false;
+    if (item.type === 'toggle') {
+      done = !!ensured[catKey][item.key];
+    } else if (item.type === 'log') {
+      const segs = ensured[catKey][item.key] || [];
+      done = segs.filter(s => s.done).length > 0;
+    } else if (item.type === 'leetcode') {
+      const segs = ensured[catKey][item.key] || [];
+      done = segs.filter(s => s.done).length >= item.target;
+    } else if (item.type === 'strength') {
+      const segs = ensured[catKey][item.key] || [];
+      done = segs.reduce((sum, s) => sum + (s.reps || 0), 0) > 0;
+    } else if (item.type === 'cardio') {
+      const segs = ensured[catKey][item.key] || [];
+      done = segs.reduce((sum, s) => sum + (s.distance || 0), 0) > 0;
+    }
+    if (!done) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+// ── Day score (0-7) for heatmap ──
+function dayScore(date) {
+  const data = loadData();
+  const day = data[date];
+  if (!day) return 0;
+  const ensured = ensureDayStructure(JSON.parse(JSON.stringify(day)));
+  let score = 0;
+  allItems().forEach(item => {
+    let done = false;
+    if (item.type === 'toggle') {
+      done = !!ensured[item.catKey][item.key];
+    } else if (item.type === 'log') {
+      const segs = ensured[item.catKey][item.key] || [];
+      done = segs.filter(s => s.done).length > 0;
+    } else if (item.type === 'leetcode') {
+      const segs = ensured[item.catKey][item.key] || [];
+      done = segs.filter(s => s.done).length >= (item.target || 2);
+    } else if (item.type === 'strength') {
+      const segs = ensured[item.catKey][item.key] || [];
+      done = segs.reduce((sum, s) => sum + (s.reps || 0), 0) > 0;
+    } else if (item.type === 'cardio') {
+      const segs = ensured[item.catKey][item.key] || [];
+      done = segs.reduce((sum, s) => sum + (s.distance || 0), 0) > 0;
+    }
+    if (done) score++;
+  });
+  return score;
+}
+
+// ── Rendering ──
+function formatDate(dateStr) {
+  const d = parseDate(dateStr);
+  const today = parseDate(TODAY);
+  const diff = Math.round((d - today) / 86400000);
+  const w = ['周日','周一','周二','周三','周四','周五','周六'];
+  const label = d.toLocaleDateString('zh-CN', { month:'short', day:'numeric' });
+  if (diff === 0) return `今天 ${label}`;
+  if (diff === -1) return `昨天 ${label}`;
+  if (diff === 1) return `明天 ${label}`;
+  return `${w[d.getDay()]} ${label}`;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderAll() {
+  document.getElementById('dateText').textContent = formatDate(currentDate);
+  renderCategories();
+  renderProgress();
+  renderHeatmap();
+  renderTodos();
+}
+
+// ── Render Categories ──
+function renderCategories() {
+  const container = document.getElementById('categoriesContainer');
+  container.innerHTML = categories.map(cat => {
+    return `
+      <div class="category-card">
+        <div class="category-header" onclick="toggleCategory(this)" data-cat="${cat.key}">
+          <span class="arrow open">▶</span> ${cat.name}
+        </div>
+        <div class="category-body" id="cat-body-${cat.key}">
+          ${cat.items.map(item => renderSubItem(cat.key, item)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleCategory(header) {
+  const arrow = header.querySelector('.arrow');
+  const body = header.nextElementSibling;
+  arrow.classList.toggle('open');
+  body.classList.toggle('collapsed');
+}
+
+function renderSubItem(catKey, item) {
+  if (item.type === 'toggle') {
+    return renderToggleItem(catKey, item);
+  }
+  if (item.type === 'log') {
+    return renderLogItem(catKey, item);
+  }
+  if (item.type === 'leetcode') {
+    return renderLeetcodeItem(catKey, item);
+  }
+  if (item.type === 'strength') {
+    return renderStrengthItem(catKey, item);
+  }
+  if (item.type === 'cardio') {
+    return renderCardioItem(catKey, item);
+  }
+  return '';
+}
+
+function renderToggleItem(catKey, item) {
+  const on = getToggle(currentDate, catKey, item.key);
+  const streak = computeStreak(catKey, item, currentDate);
+  return `
+    <div class="sub-item">
+      <div class="sub-item-header">
+        <span class="sub-item-label">${item.icon} ${item.name}</span>
+        ${streak > 0 ? `<span style="font-size:0.72rem;color:var(--text-dim)">🔥 ${streak} 天</span>` : ''}
+      </div>
+      <div class="toggle-row">
+        <span class="sub-item-summary ${on ? 'done' : ''}">${on ? '✅ 已完成' : '○ 未完成'}</span>
+        <button class="habit-toggle ${on ? 'on' : ''}" onclick="toggleHabit('${catKey}','${item.key}')"></button>
+      </div>
+    </div>`;
+}
+
+function renderLogItem(catKey, item) {
+  const segs = getSegments(currentDate, catKey, item.key);
+  const doneCount = segs.filter(s => s.done).length;
+  const total = segs.length;
+  const streak = computeStreak(catKey, item, currentDate);
+  return `
+    <div class="sub-item">
+      <div class="sub-item-header">
+        <span class="sub-item-label">${item.icon} ${item.name}</span>
+        <span class="sub-item-summary ${doneCount > 0 ? 'done' : ''}">${doneCount}/${total} 项已完成 ${streak > 0 ? '🔥'+streak+'天' : ''}</span>
+      </div>
+      <div class="segment-list" id="seg-${catKey}-${item.key}">
+        ${segs.map((s, i) => `
+          <div class="lc-row">
+            <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleLog('${catKey}','${item.key}',${i})">
+            <span class="lc-name ${s.done ? 'done' : ''}">${escapeHtml(s.text || '(未命名)')}</span>
+            <button class="del-btn" onclick="deleteSegment('${catKey}','${item.key}',${i})" title="删除">✕</button>
+          </div>`).join('')}
+      </div>
+      <div class="lc-add-wrap">
+        <input type="text" id="log-input-${catKey}-${item.key}" placeholder="记录学习内容..." onkeydown="if(event.key==='Enter')addLog('${catKey}','${item.key}')">
+        <button onclick="addLog('${catKey}','${item.key}')">+ 添加</button>
+      </div>
+    </div>`;
+}
+
+function renderLeetcodeItem(catKey, item) {
+  const segs = getSegments(currentDate, catKey, item.key);
+  const doneCount = segs.filter(s => s.done).length;
+  const total = segs.length;
+  const target = item.target || 2;
+  const streak = computeStreak(catKey, item, currentDate);
+  return `
+    <div class="sub-item">
+      <div class="sub-item-header">
+        <span class="sub-item-label">${item.icon} ${item.name}</span>
+        <span class="sub-item-summary ${doneCount >= target ? 'done' : ''}">${doneCount}/${target} 题已完成 ${streak > 0 ? '🔥'+streak+'天' : ''}</span>
+      </div>
+      <div class="segment-list" id="seg-${catKey}-${item.key}">
+        ${segs.map((s, i) => `
+          <div class="lc-row">
+            <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleLeetcode('${catKey}','${item.key}',${i})">
+            <span class="lc-name ${s.done ? 'done' : ''}">${escapeHtml(s.name || '(未命名)')}</span>
+            <button class="del-btn" onclick="deleteSegment('${catKey}','${item.key}',${i})" title="删除">✕</button>
+          </div>`).join('')}
+      </div>
+      <div class="lc-add-wrap">
+        <input type="text" id="lc-input-${catKey}-${item.key}" placeholder="输入题目名称..." onkeydown="if(event.key==='Enter')addLeetcode('${catKey}','${item.key}')">
+        <button onclick="addLeetcode('${catKey}','${item.key}')">+ 添加</button>
+      </div>
+    </div>`;
+}
+
+function renderStrengthItem(catKey, item) {
+  const segs = getSegments(currentDate, catKey, item.key);
+  const totalReps = segs.reduce((sum, s) => sum + (s.reps || 0), 0);
+  const streak = computeStreak(catKey, item, currentDate);
+  return `
+    <div class="sub-item">
+      <div class="sub-item-header">
+        <span class="sub-item-label">${item.icon} ${item.name}</span>
+        <span class="sub-item-summary ${totalReps > 0 ? 'done' : ''}">
+          总计 ${totalReps} ${item.unit} · ${segs.length} 组 ${streak > 0 ? '🔥'+streak+'天' : ''}
+        </span>
+      </div>
+      <div class="segment-list" id="seg-${catKey}-${item.key}">
+        ${segs.map((s, i) => `
+          <div class="segment-row">
+            <span class="seg-idx">#${i+1}</span>
+            <input type="number" class="narrow" min="0" value="${s.reps || 0}" onchange="updateStrengthSeg('${catKey}','${item.key}',${i},this.value)" placeholder="次数">
+            <span class="seg-unit">${item.unit}</span>
+            <button class="del-btn" onclick="deleteSegment('${catKey}','${item.key}',${i})" title="删除">✕</button>
+          </div>`).join('')}
+      </div>
+      <button class="add-btn" onclick="addStrengthSeg('${catKey}','${item.key}')">+ 添加一组</button>
+    </div>`;
+}
+
+function renderCardioItem(catKey, item) {
+  const segs = getSegments(currentDate, catKey, item.key);
+  const totalDist = segs.reduce((sum, s) => sum + (s.distance || 0), 0);
+  const totalDur = segs.reduce((sum, s) => sum + (s.duration || 0), 0);
+  const streak = computeStreak(catKey, item, currentDate);
+  return `
+    <div class="sub-item">
+      <div class="sub-item-header">
+        <span class="sub-item-label">${item.icon} ${item.name}</span>
+        <span class="sub-item-summary ${totalDist > 0 ? 'done' : ''}">
+          总计 ${totalDist.toFixed(1)} ${item.distUnit} · ${totalDur} ${item.durUnit} · ${segs.length} 段 ${streak > 0 ? '🔥'+streak+'天' : ''}
+        </span>
+      </div>
+      <div class="segment-list" id="seg-${catKey}-${item.key}">
+        ${segs.map((s, i) => `
+          <div class="segment-row">
+            <span class="seg-idx">#${i+1}</span>
+            <input type="number" class="narrow" min="0" step="0.1" value="${s.distance || 0}" onchange="updateCardioSeg('${catKey}','${item.key}',${i},'distance',this.value)" placeholder="距离">
+            <span class="seg-unit">${item.distUnit}</span>
+            <input type="number" class="narrow" min="0" value="${s.duration || 0}" onchange="updateCardioSeg('${catKey}','${item.key}',${i},'duration',this.value)" placeholder="时长">
+            <span class="seg-unit">${item.durUnit}</span>
+            <button class="del-btn" onclick="deleteSegment('${catKey}','${item.key}',${i})" title="删除">✕</button>
+          </div>`).join('')}
+      </div>
+      <button class="add-btn" onclick="addCardioSeg('${catKey}','${item.key}')">+ 添加一段</button>
+    </div>`;
+}
+
+// ── Render Progress ──
+function renderProgress() {
+  const items = allItems();
+  let total = items.length;
+  let done = 0;
+  items.forEach(item => {
+    if (isItemDone(currentDate, item.catKey, item)) done++;
+  });
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('progressPercent').textContent = `${done}/${total} · ${pct}%`;
+  document.getElementById('progressFill').style.width = `${pct}%`;
+}
+
+// ── Render Heatmap ──
+function setHeatmapView(view) {
+  heatmapView = view;
+  document.querySelectorAll('.heatmap-tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.heatmap-tabs button[data-view="${view}"]`).classList.add('active');
+  renderHeatmap();
+}
+
+function getMonday(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function getWeekLabel(monday) {
+  const d = new Date(monday);
+  const dayNum = d.getDay() || 7;
+  d.setDate(d.getDate() + 4 - dayNum);
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return 'W' + weekNo;
+}
+
+function generateWeek(monday) {
+  const week = [];
+  const dayNames = ['一','二','三','四','五','六','日'];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
+    const ds = toDateStr(d);
+    const score = dayScore(ds);
+    week.push({
+      date: ds, score,
+      dayNum: d.getDate(),
+      monthNum: d.getMonth() + 1,
+      label: `${d.getMonth()+1}/${d.getDate()} 周${dayNames[i]}`
+    });
+  }
+  return week;
+}
+
+function cellHTML(day, todayDate, maxScore) {
+  const isToday = day.date === todayDate;
+  const isFuture = day.date > todayDate;
+  const isEmpty = day.empty;
+  const level = Math.min(maxScore, Math.max(0, day.score));
+  const cls = `heatmap-day l${level}${isFuture ? ' future' : ''}${isEmpty ? ' empty' : ''}`;
+  const click = (isFuture || isEmpty) ? '' : `onclick="currentDate='${day.date}';renderAll()"`;
+  const style = isToday ? 'border:2px solid var(--accent);box-shadow:0 0 6px var(--accent)' : '';
+  return `<div class="${cls}" ${click} style="${style}" title="${day.label}: ${day.score}/${maxScore} 项">
+    ${day.dayNum}<span class="tooltip">${day.label}: ${day.score}/${maxScore} 项</span>
+  </div>`;
+}
+
+function renderWeekGrid(weeks, todayDate) {
+  const maxScore = allItems().length;
+  return weeks.map(week => {
+    const weekLabel = getWeekLabel(parseDate(week[0].date));
+    const cells = week.map(d => cellHTML(d, todayDate, maxScore)).join('');
+    return `<div class="heatmap-week"><span class="heatmap-week-label">${weekLabel}</span>${cells}</div>`;
+  }).join('');
+}
+
+function renderHeatmap() {
+  const todayDate = TODAY;
+  const refDate = currentDate;
+  const ref = parseDate(refDate);
+  const container = document.getElementById('heatmap');
+
+  if (heatmapView === 'week') {
+    const monday = getMonday(ref);
+    const weeks = [generateWeek(monday)];
+    container.className = 'heatmap-rows';
+    container.innerHTML = renderWeekGrid(weeks, todayDate);
+
+  } else if (heatmapView === 'month') {
+    const monthStart = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    const monthEnd = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+    const targetMonth = ref.getMonth() + 1;
+    const startMonday = getMonday(monthStart);
+    const endMonday = getMonday(monthEnd);
+    let weeks = [];
+    for (let m = new Date(startMonday); m <= endMonday; m.setDate(m.getDate() + 7)) {
+      weeks.push(generateWeek(new Date(m)));
+    }
+    // Mark days outside target month as empty
+    weeks.forEach(week => {
+      week.forEach(day => { if (day.monthNum !== targetMonth) day.empty = true; });
+    });
+    container.className = 'heatmap-rows';
+    container.innerHTML = renderWeekGrid(weeks, todayDate);
+
+  } else if (heatmapView === 'year') {
+    // Collect all weeks from Jan 1 to ref date, group by month
+    const yearStart = new Date(ref.getFullYear(), 0, 1);
+    const startMonday = getMonday(yearStart);
+    const endMonday = getMonday(ref);
+    let allWeeks = [];
+    for (let m = new Date(startMonday); m <= endMonday; m.setDate(m.getDate() + 7)) {
+      allWeeks.push(generateWeek(new Date(m)));
+    }
+    // Group by month (use Thursday's month)
+    const byMonth = {};
+    allWeeks.forEach(week => {
+      const m = (week[3] || week[0]).monthNum;
+      if (!byMonth[m]) byMonth[m] = [];
+      byMonth[m].push(week);
+    });
+    // Mark non-month days as empty for year blocks
+    Object.entries(byMonth).forEach(([m, weeks]) => {
+      const mNum = parseInt(m);
+      weeks.forEach(week => {
+        week.forEach(day => { if (day.monthNum !== mNum) day.empty = true; });
+      });
+    });
+
+    container.className = 'heatmap-year-grid';
+    const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    let html = '';
+    Object.keys(byMonth).sort((a,b) => a-b).forEach(m => {
+      html += `<div class="heatmap-month-block" data-month="${m}">
+        <div class="heatmap-month-name">${monthNames[parseInt(m)-1]}</div>
+        <div class="heatmap-weekdays"><span></span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+        ${renderWeekGrid(byMonth[m], todayDate)}
+      </div>`;
+    });
+    const targetMonth = ref.getMonth() + 1;
+    // Scroll to ref date's month
+    container.innerHTML = html;
+    setTimeout(() => {
+      const block = container.querySelector(`.heatmap-month-block[data-month="${targetMonth}"]`);
+      if (block) block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+}
+
+// ── Render Todos ──
+function renderTodos() {
+  const day = getDayData(currentDate);
+  const list = document.getElementById('todoList');
+  list.innerHTML = (day.todos || []).map((t, i) => `
+    <li class="todo-item">
+      <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${i})">
+      <span class="todo-text ${t.done ? 'done' : ''}">${escapeHtml(t.text)}</span>
+      <button class="todo-del" onclick="deleteTodo(${i})">✕</button>
+    </li>`).join('');
+}
+
+// ── Actions: Log ──
+function addLog(catKey, itemKey) {
+  const input = document.getElementById(`log-input-${catKey}-${itemKey}`);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs.push({ text, done: false });
+  setSegments(currentDate, catKey, itemKey, segs);
+  input.value = '';
+  renderAll();
+}
+
+function toggleLog(catKey, itemKey, idx) {
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs[idx].done = !segs[idx].done;
+  setSegments(currentDate, catKey, itemKey, segs);
+  renderAll();
+}
+
+// ── Actions: LeetCode ──
+function addLeetcode(catKey, itemKey) {
+  const input = document.getElementById(`lc-input-${catKey}-${itemKey}`);
+  const name = input.value.trim();
+  if (!name) return;
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs.push({ name, done: false });
+  setSegments(currentDate, catKey, itemKey, segs);
+  input.value = '';
+  renderAll();
+}
+
+function toggleLeetcode(catKey, itemKey, idx) {
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs[idx].done = !segs[idx].done;
+  setSegments(currentDate, catKey, itemKey, segs);
+  renderAll();
+}
+
+// ── Actions: Strength ──
+function addStrengthSeg(catKey, itemKey) {
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs.push({ reps: 0 });
+  setSegments(currentDate, catKey, itemKey, segs);
+  renderAll();
+}
+
+function updateStrengthSeg(catKey, itemKey, idx, val) {
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs[idx].reps = parseInt(val) || 0;
+  setSegments(currentDate, catKey, itemKey, segs);
+  renderAll();
+}
+
+// ── Actions: Cardio ──
+function addCardioSeg(catKey, itemKey) {
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs.push({ duration: 0, distance: 0 });
+  setSegments(currentDate, catKey, itemKey, segs);
+  renderAll();
+}
+
+function updateCardioSeg(catKey, itemKey, idx, field, val) {
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs[idx][field] = parseFloat(val) || 0;
+  setSegments(currentDate, catKey, itemKey, segs);
+  renderAll();
+}
+
+// ── Actions: Delete Segment ──
+function deleteSegment(catKey, itemKey, idx) {
+  const segs = getSegments(currentDate, catKey, itemKey);
+  segs.splice(idx, 1);
+  setSegments(currentDate, catKey, itemKey, segs);
+  renderAll();
+}
+
+// ── Actions: Toggle ──
+function toggleHabit(catKey, itemKey) {
+  const val = getToggle(currentDate, catKey, itemKey);
+  setToggle(currentDate, catKey, itemKey, !val);
+  renderAll();
+}
+
+// ── Actions: Date ──
+function changeDate(delta) {
+  const d = parseDate(currentDate);
+  d.setDate(d.getDate() + delta);
+  currentDate = toDateStr(d);
+  renderAll();
+}
+function goToday() { currentDate = TODAY; renderAll(); }
+
+// ── Actions: Todo ──
+function addTodo() {
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const day = getDayData(currentDate);
+  day.todos.push({ text, done: false });
+  setDayData(currentDate, day);
+  input.value = '';
+  renderAll();
+}
+function toggleTodo(i) {
+  const day = getDayData(currentDate);
+  day.todos[i].done = !day.todos[i].done;
+  setDayData(currentDate, day);
+  renderAll();
+}
+function deleteTodo(i) {
+  const day = getDayData(currentDate);
+  day.todos.splice(i, 1);
+  setDayData(currentDate, day);
+  renderAll();
+}
+
+// ── Theme ──
+function toggleTheme() {
+  const root = document.documentElement;
+  const isLight = root.classList.toggle('light');
+  localStorage.setItem('habit_tracker_theme', isLight ? 'light' : 'dark');
+}
+(function initTheme() {
+  if (localStorage.getItem('habit_tracker_theme') === 'light') {
+    document.documentElement.classList.add('light');
+  }
+})();
+
+// ── Export / Import ──
+function exportData() {
+  const blob = new Blob([JSON.stringify(loadData(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `habit-tracker-backup-${TODAY}.json`;
+  a.click();
+}
+function importDataPrompt() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (typeof data !== 'object') throw new Error('Invalid format');
+        saveData(data);
+        renderAll();
+        alert('✅ 数据导入成功！');
+      } catch { alert('❌ 文件格式错误'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ── Init ──
+renderAll();
+initSync();
+</script>
+</body>
+</html>
